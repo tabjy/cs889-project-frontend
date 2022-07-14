@@ -1,0 +1,127 @@
+<template>
+  <div>
+    <v-row>
+      <v-col style="{
+        margin-bottom: -23px;
+        font-size: 24px;
+        padding: 24px 16px 0 16px;
+      }">
+        <v-text-field
+            label="Search"
+            placeholder="Keywords"
+            variant="underlined"
+            v-model="keywords"
+        ></v-text-field>
+      </v-col>
+    </v-row>
+    <v-table>
+      <thead>
+      <tr>
+        <th class="text-left" style="width: 84px">
+          ID
+          <v-btn
+              :icon="sort.key === 'id' && sort.descending ? 'mdi-chevron-down' : 'mdi-chevron-up'"
+              @click.stop="sort.descending = sort.key === 'id' ? !sort.descending : false; sort.key = 'id'"
+              :style="sort.key !== 'id' ? {opacity: 0.2}: {}"
+              variant="text" class="ml-2" size="x-small" style="display: inline"></v-btn>
+        </th>
+        <th class="text-left">
+          Source
+          <v-btn
+              :icon="sort.key === 'source' && sort.descending ? 'mdi-chevron-down' : 'mdi-chevron-up'"
+              @click.stop="sort.descending = sort.key === 'source' ? !sort.descending : false; sort.key = 'source'"
+              :style="sort.key !== 'source' ? {opacity: 0.2}: {}"
+              variant="text" class="ml-2" size="x-small" style="display: inline"></v-btn>
+        </th>
+        <th class="text-left">
+          Summary
+          <v-btn
+              :icon="sort.key === 'summary' && sort.descending ? 'mdi-chevron-down' : 'mdi-chevron-up'"
+              @click.stop="sort.descending = sort.key === 'summary' ? !sort.descending : false; sort.key = 'summary'"
+              :style="sort.key !== 'summary' ? {opacity: 0.2}: {}"
+              variant="text" class="ml-2" size="x-small" style="display: inline"></v-btn>
+        </th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr
+          v-for="item in sortedFunctions"
+          :key="item.name"
+      >
+        <td>{{ item.id }}</td>
+        <td style="white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;">
+          <span>
+            {{ item.source }}
+            <v-tooltip
+                activator="parent"
+                location="start"
+            ><pre>{{ item.source }}</pre></v-tooltip>
+          </span>
+        </td>
+        <td style="white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;">
+          <span>
+            {{ item.summary }}
+            <v-tooltip
+                activator="parent"
+                location="start"
+            >{{ item.summary }}</v-tooltip>
+          </span>
+        </td>
+      </tr>
+      </tbody>
+    </v-table>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'FunctionTable',
+  props: {},
+  data: () => ({
+    sort: {
+      key: 'id',
+      descending: false
+    },
+
+    keywords: '',
+
+    functions: [
+      {
+        id: 0,
+        source: 'public static void main(String[] args) {\n  System.out.println("hello world!");\n}',
+        summary: 'print the string "hello world" to console',
+      },
+      {
+        id: 1,
+        source: 'private int add(int a, int b) {\n  return a + b;\n}',
+        summary: 'add the two input integer'
+      },
+      {
+        id: 2,
+        source: 'private int subtract(int a, int b) {\n  return a - b;\n}',
+        summary: 'subtract the second input from the first'
+      },
+      {
+        id: 3,
+        source: 'private int mul(int a, int b) {\n  return a * b;\n}',
+        summary: 'multiply the two input integers'
+      }
+    ]
+  }),
+  computed: {
+    sortedFunctions() {
+      const comparator = this.sort.key === 'id'
+          ? (lhs, rhs) => lhs.id - rhs.id
+          : (lhs, rhs) => String(lhs[this.sort.key]).localeCompare(String(rhs[this.sort.key]))
+
+      const keywords = this.keywords.split(/\s+/g).filter(str => str.length).map(str => str.toLowerCase())
+
+
+      return this.functions.filter(item =>
+          !keywords.length ||
+          keywords.find(keyword => item.source.toLowerCase().indexOf(keyword) !== -1 || item.summary.toLowerCase().indexOf(keyword) !== -1)
+      ).sort((lhs, rhs) => comparator(lhs, rhs) * (this.sort.descending ? -1 : 1))
+    }
+  },
+}
+</script>
