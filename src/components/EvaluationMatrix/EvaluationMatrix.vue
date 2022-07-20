@@ -14,17 +14,17 @@
         ></v-select>
       </v-col>
     </v-row>
-    <v-table>
+    <v-table v-if="method">
       <thead>
       <tr>
-        <th class="text-left" v-for="key in Object.keys(matrices[method]).sort()" :key="key">
+        <th class="text-left" v-for="key in Object.keys(matrices[method])" :key="key">
           {{ key }}
         </th>
       </tr>
       </thead>
       <tbody>
       <tr>
-        <td class="text-left" v-for="key in Object.keys(matrices[method]).sort()" :key="key">
+        <td class="text-left" v-for="key in Object.keys(matrices[method])" :key="key">
           {{ matrices[method][key] }}
         </td>
       </tr>
@@ -45,25 +45,14 @@ export default {
 
     keywords: '',
 
-    method: 'BLEU',
-    methods: [
-      'BLEU',
-      'ROUGE-LCS',
-    ],
-
-    matrices: {
-      'BLEU': {
-        'BLEU-1': 18.69,
-        'BLEU-2': 22.11,
-        'BLEU-3': 14.25,
-        'BLEU-4': 10.91
-      },
-      'ROUGE-LCS': {
-        'OUGE-LCS F1': 49.75
-      }
-    }
+    method: null,
+    matrices: {}
   }),
   computed: {
+    methods() {
+      return this.matrices ? Object.keys(this.matrices).sort() : []
+    },
+
     sortedFunctions() {
       const comparator = this.sort.key === 'id'
           ? (lhs, rhs) => lhs.id - rhs.id
@@ -78,5 +67,16 @@ export default {
       ).sort((lhs, rhs) => comparator(lhs, rhs) * (this.sort.descending ? -1 : 1))
     }
   },
+  created () {
+    this.$parent.$emit('loading')
+
+    this.$api.getEvaluationScores().then(matrices => {
+      this.matrices = matrices
+      this.method = Object.keys(matrices).sort()[0]
+
+      console.log('loaded')
+      this.$parent.$emit('loaded')
+    })
+  }
 }
 </script>

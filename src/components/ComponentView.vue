@@ -1,6 +1,7 @@
 <template>
   <v-col>
-    <div :style="fullscreen ? {
+    <div
+        :style="fullscreen ? {
     position: 'fixed',
     width: 'calc(100% - 16px)',
     height: 'calc(100% - 16px)',
@@ -23,7 +24,14 @@
                 variant="text" class="ml-2" size="x-small"></v-btn>
           </v-system-bar>
 
-          <v-main style="overflow: auto">
+          <div v-if="loading" class="text-center" style="margin-top: auto; margin-bottom: auto; width: 100%">
+            <v-progress-circular
+                indeterminate
+                color="primary"
+            ></v-progress-circular>
+          </div>
+          <v-main style="overflow: auto" @loading="loading = true" :style="{display: loading ? 'none' : 'block'}"
+                  @loaded="loading = false">
             <slot></slot>
           </v-main>
         </v-layout>
@@ -40,7 +48,13 @@ export default {
     'icon': String,
   },
   data: () => ({
-    fullscreen: false
+    fullscreen: false,
+    loading: false
   }),
+  methods: {
+    setLoaded () {
+      console.log('loaded')
+    }
+  }
 }
 </script>
