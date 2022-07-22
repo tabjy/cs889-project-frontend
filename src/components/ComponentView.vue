@@ -30,7 +30,7 @@
                 color="primary"
             ></v-progress-circular>
           </div>
-          <v-main style="overflow: auto" @loading="loading = true" :style="{display: loading ? 'none' : 'block'}"
+          <v-main style="overflow: auto; height: 100%" @loading="loading = true" :style="{display: loading ? 'none' : 'block'}"
                   @loaded="loading = false">
             <slot></slot>
           </v-main>

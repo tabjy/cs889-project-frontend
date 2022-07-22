@@ -74,7 +74,6 @@ export default {
       this.matrices = matrices
       this.method = Object.keys(matrices).sort()[0]
 
-      console.log('loaded')
       this.$parent.$emit('loaded')
     })
   }

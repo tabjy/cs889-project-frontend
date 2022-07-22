@@ -18,11 +18,23 @@ export default {
   components: {
     CodeNode
   },
-  props: {
-    ast: [Element, Text],
-    highlights: Set,
-    editables: Set
+  data () {
+    return {
+      // TODO: interactively update the id
+      id: 0,
+      ast: null,
+      highlights: new Set(),
+      editables: new Set()
+    }
   },
+  created () {
+    this.$parent.$emit('loading')
+
+    this.$api.getAst(this.id).then(xml => {
+      this.ast = new DOMParser().parseFromString(xml, 'text/xml')
+      this.$parent.$emit('loaded')
+    })
+  }
 }
 </script>
 

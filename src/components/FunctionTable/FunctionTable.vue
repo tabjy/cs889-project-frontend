@@ -85,28 +85,7 @@ export default {
 
     keywords: '',
 
-    functions: [
-      {
-        id: 0,
-        source: 'public static void main(String[] args) {\n  System.out.println("hello world!");\n}',
-        summary: 'print the string "hello world" to console',
-      },
-      {
-        id: 1,
-        source: 'private int add(int a, int b) {\n  return a + b;\n}',
-        summary: 'add the two input integer'
-      },
-      {
-        id: 2,
-        source: 'private int subtract(int a, int b) {\n  return a - b;\n}',
-        summary: 'subtract the second input from the first'
-      },
-      {
-        id: 3,
-        source: 'private int mul(int a, int b) {\n  return a * b;\n}',
-        summary: 'multiply the two input integers'
-      }
-    ]
+    functions: []
   }),
   computed: {
     sortedFunctions() {
@@ -123,5 +102,14 @@ export default {
       ).sort((lhs, rhs) => comparator(lhs, rhs) * (this.sort.descending ? -1 : 1))
     }
   },
+  created () {
+    this.$parent.$emit('loading')
+
+    this.$api.getInstances().then(instances => {
+      this.functions = instances
+
+      this.$parent.$emit('loaded')
+    })
+  }
 }
 </script>
