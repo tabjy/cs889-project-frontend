@@ -30,6 +30,11 @@ class ApiClient {
     // TODO
     throw new Error('not implemented!')
   }
+
+  async getCandidateTokens (id) {
+    // TODO
+    throw new Error('not implemented!')
+  }
 }
 
 class MockApiClient extends ApiClient {
@@ -101,6 +106,14 @@ class MockApiClient extends ApiClient {
     const response = await fetch('/mock/input.json')
     const json = await response.json()
     return json.summary.split(' ')
+  }
+
+  async getCandidateTokens (id) {
+    const response = await fetch('/mock/input.json')
+    const json = await response.json()
+    return Object.entries(json['topK_word'])
+      .sort(([k1], [k2]) => parseInt(k1) - parseInt[k2])
+      .map(([k, v]) => v.split(' '))
   }
 }
 

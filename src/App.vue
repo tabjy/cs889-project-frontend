@@ -53,6 +53,15 @@
           >
             <attention></attention>
           </component-view>
+
+          <component-view
+              cols="12"
+              sm="4"
+              name="Candidate Tokens"
+              icon="mdi-file-code-outline"
+          >
+            <CandidateTokens></CandidateTokens>
+          </component-view>
         </v-row>
       </div>
       <!--      </v-container>-->
@@ -67,11 +76,13 @@ import FunctionTable from "./components/FunctionTable/FunctionTable.vue";
 import EvaluationMatrix from "./components/EvaluationMatrix/EvaluationMatrix.vue";
 import Embedding from "./components/Embedding/Embedding.vue";
 import Attention from './components/Attention/Attention.vue'
+import CandidateTokens from './components/CandidateTokens/CandidateTokens.vue'
 
 export default {
   name: 'App',
 
   components: {
+    CandidateTokens,
     Attention,
     EvaluationMatrix,
     FunctionDetails,
