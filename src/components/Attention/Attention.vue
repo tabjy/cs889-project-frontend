@@ -1,13 +1,23 @@
 <template>
   <div style="padding: 8px; height: 100%">
     <div ref="summary" style="display: inline-flex">
-      <v-chip v-for="(token, i) in summaryTokens" @mouseover="setActiveLinks({from: i})" @mouseout="resetActiveLinks()" style="margin-right: 8px">{{ token }}</v-chip>
+      <v-chip v-for="(token, i) in summaryTokens" @mouseover="!locked && setActiveLinks({from: i})"
+              @mouseout="!locked && resetActiveLinks()" @click.stop="locked = !locked ? `from-${i}` : null"
+              :style="{border: locked === `from-${i}` ? 'thin solid currentColor' : undefined}"
+              style="margin-right: 8px">
+        {{ token }}
+      </v-chip>
     </div>
 
     <div ref="container"></div>
 
     <div ref="sources" style="display: inline-flex">
-      <v-chip v-for="(source, i) in sources[type]" @mouseover="setActiveLinks({to: i})" @mouseout="resetActiveLinks()" style="margin-right: 8px">{{ source }}</v-chip>
+      <v-chip v-for="(source, i) in sources[type]" @mouseover="!locked && setActiveLinks({to: i})"
+              @mouseout="!locked && resetActiveLinks()" @click.stop="locked = !locked ? `to-${i}` : null"
+              :style="{border: locked === `to-${i}` ? 'thin solid currentColor' : undefined}"
+              style="margin-right: 8px">
+        {{ source }}
+      </v-chip>
     </div>
   </div>
 </template>
@@ -21,7 +31,8 @@ export default {
     // TODO: set id interactively
     id: 0,
     summaryTokens: [],
-    type: 'sequences',
+    type: 'nodes',
+    locked: null,
     sources: {
       sequences: [],
       nodes: [],
@@ -54,7 +65,7 @@ export default {
       const bottomPos = Array.from(toContainer.children).map(v => v.offsetLeft + v.clientWidth / 2 - maxStroke / 2)
 
       const width = Math.max(fromContainer.clientWidth, toContainer.clientWidth)
-      const height = this.$parent.$el.clientHeight - 128;
+      const height = this.$parent.$el.clientHeight - 128
 
       const linkGen = d3.linkVertical()
 
@@ -91,7 +102,7 @@ export default {
           .attr('d', linkGen)
           .attr('fill', 'none')
           .attr('stroke', d => d.width < 0 ? 'tomato' : 'steelblue')
-          .style("opacity", 0.2)
+          .style('opacity', 0.2)
           .attr('stroke-width', d => Math.abs(d.width))
           .attr('class', d => `from-${d.from} to-${d.to}`)
 
@@ -99,23 +110,23 @@ export default {
 
       container.appendChild(svg.node())
     },
-    setActiveLinks({from, to}) {
+    setActiveLinks ({ from, to }) {
       this.svg.selectAll('path')
-          .style("opacity", 0)
+          .style('opacity', 0.02)
 
       if (from !== undefined) {
         this.svg.selectAll(`path.from-${from}`)
-            .style("opacity", 0.2)
+            .style('opacity', 0.5)
       }
 
       if (to !== undefined) {
         this.svg.selectAll(`path.to-${to}`)
-            .style("opacity", 0.2)
+            .style('opacity', 0.5)
       }
     },
-    resetActiveLinks() {
+    resetActiveLinks () {
       this.svg.selectAll('path')
-          .style("opacity", 0.2)
+          .style('opacity', 0.2)
     }
   },
   watch: {
