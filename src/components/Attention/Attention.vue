@@ -1,19 +1,41 @@
 <template>
-  <div style="padding: 8px; height: 100%">
+  <div style="margin-bottom: -38px; height: 94px">
+    <div style="display: inline-flex; width: 100%">
+      <v-radio-group
+          v-model="type"
+          inline
+      >
+        <v-radio
+            label="Nodes"
+            value="nodes"
+        ></v-radio>
+        <v-radio
+            label="Sequences"
+            value="sequences"
+        ></v-radio>
+      </v-radio-group>
+    </div>
+  </div>
+
+  <div style="height: calc(100% - 56px); overflow-x: auto; padding-left: 4px; padding-right: 4px">
     <div ref="summary" style="display: inline-flex">
-      <v-chip v-for="(token, i) in summaryTokens" @mouseover="!locked && setActiveLinks({from: i})"
-              @mouseout="!locked && resetActiveLinks()" @click.stop="locked = !locked ? `from-${i}` : null"
+      <v-chip v-for="(token, i) in (summary||[]).filter(token => token.toLowerCase() !== '<null>')"
+              @mouseover="setHighlights({from: i}) || !locked && setActiveLinks({from: i})"
+              @mouseout="resetHighlights() || !locked && resetActiveLinks()"
+              @click.stop="locked = !locked ? `from-${i}` : null"
               :style="{border: locked === `from-${i}` ? 'thin solid currentColor' : undefined}"
               style="margin-right: 8px">
         {{ token }}
       </v-chip>
     </div>
 
-    <div ref="container"></div>
+    <div ref="container" style="height: calc(100% - 68px)"></div>
 
     <div ref="sources" style="display: inline-flex">
-      <v-chip v-for="(source, i) in sources[type]" @mouseover="!locked && setActiveLinks({to: i})"
-              @mouseout="!locked && resetActiveLinks()" @click.stop="locked = !locked ? `to-${i}` : null"
+      <v-chip v-for="(source, i) in sources[type]"
+              @mouseover="setHighlights({to: i}) || !locked && setActiveLinks({to: i})"
+              @mouseout="resetHighlights() || !locked && resetActiveLinks()"
+              @click.stop="locked = !locked ? `to-${i}` : null"
               :style="{border: locked === `to-${i}` ? 'thin solid currentColor' : undefined}"
               style="margin-right: 8px">
         {{ source }}
@@ -24,48 +46,68 @@
 
 <script>
 import * as d3 from 'd3'
+import { reverselyMapIds } from '../../utils/ast'
 
 export default {
   name: 'Attention',
+
+  props: {
+    summary: Array,
+    attentions: Object,
+    ast: XMLDocument,
+    highlights: Set,
+  },
+
   data: () => ({
-    // TODO: set id interactively
-    id: 0,
-    summaryTokens: [],
-    type: 'nodes',
     locked: null,
-    sources: {
-      sequences: [],
-      nodes: [],
-    },
-    attentions: {
-      sequences: [/* [] */],
-      nodes: [/* [] */]
-    },
+    type: 'nodes',
+
+    _idMaps: null,
+    _sources: null,
+
     svg: null
   }),
+
+  computed: {
+    sources () {
+      if (this._sources) {
+        return this._sources
+      }
+
+      if (!this.ast) {
+        return {
+          sequences: [],
+          nodes: []
+        }
+      }
+
+      if (!this._idMaps) {
+        this._idMaps = reverselyMapIds(this.ast)
+      }
+
+      this._sources = {
+        sequences: Array.from(this._idMaps.tokens.entries()).sort(([k1], [k2]) => parseInt(k1) - parseInt(k2)).map(([_, v]) => v).slice(0, 50),
+        nodes: Array.from(this._idMaps.names.entries()).sort(([k1], [k2]) => parseInt(k1) - parseInt(k2)).map(([_, v]) => v).slice(0, 100),
+      }
+
+      return this._sources
+    }
+  },
+
   methods: {
-    idToSequence (id) {
-      // TODO: compute from AST
+    drawChart () {
+      this.$refs.container.innerHTML = ''
 
-    },
+      if (!this.attentions) {
+        return
+      }
 
-    idToNode (id) {
-      // TODO: compute from AST
-    },
+      const width = Math.max(this.$refs.summary.clientWidth, this.$refs.sources.clientWidth)
+      const height = this.$refs.container.clientHeight
 
-    idToSummaryToken (id) {
-      // TODO: compute from AST
-    },
-    drawChart (container, attentions, fromContainer, toContainer) {
       const maxStroke = 16
-
-      container.innerHTML = ''
-
-      const topPos = Array.from(fromContainer.children).map(v => v.offsetLeft + v.clientWidth / 2 - maxStroke / 2)
-      const bottomPos = Array.from(toContainer.children).map(v => v.offsetLeft + v.clientWidth / 2 - maxStroke / 2)
-
-      const width = Math.max(fromContainer.clientWidth, toContainer.clientWidth)
-      const height = this.$parent.$el.clientHeight - 128
+      const topPos = Array.from(this.$refs.summary.children).map(v => v.offsetLeft + v.clientWidth / 2 - maxStroke / 4)
+      const bottomPos = Array.from(this.$refs.sources.children).map(v => v.offsetLeft + v.clientWidth / 2 - maxStroke / 4)
 
       const linkGen = d3.linkVertical()
 
@@ -73,10 +115,12 @@ export default {
           .attr('width', width)
           .attr('height', height)
 
-      const r = attentions.length
-      const c = (attentions[0] || []).length
+      const attention = this.attentions[this.type].slice(0, this.summary.filter(token => token.toLowerCase() !== '<null>').length)
 
-      const maxMagnitude = Math.max(...attentions.map(arr => Math.max(...arr.map(value => Math.abs(value)))))
+      const r = attention.length
+      const c = (attention[0] || []).length
+
+      const maxMagnitude = Math.max(...attention.map(arr => Math.max(...arr.map(value => Math.abs(value)))))
       const lineWidthScale = d3.scaleLinear()
           .domain([0, maxMagnitude]).range([0, maxStroke])
 
@@ -89,7 +133,7 @@ export default {
             return {
               source: [topPos[row], 0],
               target: [bottomPos[col], height],
-              width: lineWidthScale(attentions[row][col]),
+              width: lineWidthScale(attention[row][col]),
               from: row,
               to: col
             }
@@ -108,7 +152,7 @@ export default {
 
       this.svg = svg
 
-      container.appendChild(svg.node())
+      this.$refs.container.appendChild(svg.node())
     },
     setActiveLinks ({ from, to }) {
       this.svg.selectAll('path')
@@ -127,47 +171,40 @@ export default {
     resetActiveLinks () {
       this.svg.selectAll('path')
           .style('opacity', 0.2)
+    },
+    setHighlights ({ from, to }) {
+      if (to !== undefined) {
+        this.highlights.clear()
+        const node = this._idMaps[this.type].get(to.toString())
+        this.highlights.add(node)
+      }
+
+      if (from !== undefined) {
+        this.highlights.clear()
+        const attentions = this.attentions[this.type][from]
+        const tops = attentions.filter(value => value > 0).sort().reverse().slice(0, 10)
+        const ids = tops.map(value => attentions.indexOf(value))
+        ids.forEach(id => this.highlights.add(this._idMaps[this.type].get(id.toString())))
+      }
+    },
+    resetHighlights () {
+      this.highlights.clear()
     }
   },
   watch: {
     type () {
-      setTimeout(() => {
-        // HACK: wait for HTML layout
-        this.drawChart(this.$refs.container, this.attentions[this.type], this.$refs.summary, this.$refs.sources)
-      }, 500)
-    }
+      if (this.attentions) {
+        // this.drawChart()
+        setTimeout(() => this.drawChart(), 0) // HACK: wait for DOM to layout
+      }
+    },
   },
   mounted () {
-    let width = -1
-
-    // HACK: resize event not working for some reason
-    setInterval(() => {
-      if (this.$refs.container && (this.$refs.container.clientWidth !== width || width === -1)) {
-        this.drawChart(this.$refs.container, this.attentions[this.type], this.$refs.summary, this.$refs.sources)
-        width = this.$refs.container.clientWidth
-      }
-    }, 500)
-  },
-  created () {
-    this.$parent.$emit('loading')
-
-    this.$api.getAttentions(this.id).then(attentions => {
-      this.attentions = attentions
-
-      this.$api.getSummaryTokens(this.id).then(summary => {
-        this.summaryTokens = summary
-
-        // TODO: obtain from AST
-        fetch('/mock/input.json')
-            .then(response => response.json())
-            .then(json => {
-              this.sources.sequences = json['code sequence'].split(' ')
-              this.sources.nodes = json['graph node'].split(' ')
-
-              this.$parent.$emit('loaded')
-            })
-      })
+    const observer = new ResizeObserver(() => {
+      this.drawChart()
     })
-  }
+
+    observer.observe(this.$refs.container)
+  },
 }
 </script>

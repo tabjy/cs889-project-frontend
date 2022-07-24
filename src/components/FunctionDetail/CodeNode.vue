@@ -2,7 +2,7 @@
   <span
       :class="'code-node hljs hljs-' + highlightType"
       :style="{
-        backgroundColor: highlights.has(node) ? 'yellow' : 'inherit',
+        backgroundColor: highlights.has(node) ? 'rgba(255,255,0,0.1)' : 'inherit',
         textDecoration: editables.has(node) ? 'underline dashed' : 'none'
         // border: editables.has(node) ? '2px dashed orange' : 'none'
       }"
@@ -12,7 +12,8 @@
   >
     <template v-if="node.nodeName === '#text'">{{ node.textContent }}</template>
     <template v-else v-for="(child) in Array.from(node.childNodes)" v-bind:key="child">
-      <code-node v-if="child.nodeName !== '#text' || (child.nodeName === '#text' && child.textContent.length)" :node="child" :highlights="highlights" :editables="editables"></code-node>
+      <code-node v-if="child.nodeName !== '#text' || (child.nodeName === '#text' && child.textContent.length)"
+                 :node="child" :highlights="highlights" :editables="editables"></code-node>
     </template>
   </span>
 </template>
@@ -22,17 +23,16 @@
 export default {
   name: 'CodeNode',
   props: {
-    node: [Element, Text],
+    node: [XMLDocument, Element, Text],
     highlights: Set,
     editables: Set
   },
   computed: {
-    src() {
+    src () {
       return new XMLSerializer().serializeToString(this.node)
     },
-    highlightType() {
+    highlightType () {
       if (!this.node.parentNode) return ''
-
 
       switch (this.node.parentNode.nodeName) {
         case 'comment':

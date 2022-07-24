@@ -105,13 +105,13 @@ export default {
         set: (target, p, value, receiver) => {
           if (value && this._selectedInstances.indexOf(p) === -1) {
             this._selectedInstances.push(p)
-            this.$emit('addSelectedInstance', p)
+            this.$emit('addSelectedInstance', parseInt(p.toString()))
             return true
           }
 
           if (!value && this._selectedInstances.indexOf(p) !== -1) {
             this._selectedInstances.splice(this._selectedInstances.indexOf(p), 1)
-            this.$emit('removeSelectedInstance', p)
+            this.$emit('removeSelectedInstance', parseInt(p.toString()))
             return true
           }
 

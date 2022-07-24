@@ -21,8 +21,9 @@
         sm="4"
         name="Attention"
         icon="mdi-file-code-outline"
+        :loading="attentions === null || ast === null || summary === null"
     >
-      <attention></attention>
+      <attention :attentions="attentions" :ast="ast" :summary="summary" :highlights="highlights"></attention>
     </component-view>
 
     <component-view
@@ -61,7 +62,8 @@ export default {
       summary: null,
       ast: null,
       highlights: new Set(),
-      editables: new Set()
+      editables: new Set(),
+      attentions: null
     }
   },
 
@@ -74,6 +76,10 @@ export default {
 
     this.$api.getAst(this.id).then(xml => {
       this.ast = new DOMParser().parseFromString(xml, 'text/xml')
+    })
+
+    this.$api.getAttentions(this.id).then(attentions => {
+      this.attentions = attentions
     })
   }
 }
