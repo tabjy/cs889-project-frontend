@@ -83,7 +83,10 @@ class MockApiClient extends ApiClient {
   async getEmbedding (id) {
     const response = await fetch('/mock/layer_output.json')
     const json = await response.json()
-    return json[1]['Embedding for code graph node'][0]
+    return {
+      sequences: json[1]['Embedding for code sequence'][0],
+      nodes: json[1]['Embedding for code graph node'][0],
+    }
   }
 
   async getAst (id) {

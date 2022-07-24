@@ -30,10 +30,9 @@
                 color="primary"
             ></v-progress-circular>
           </div>
-          <v-main style="overflow: auto; height: 100%" @loading="loading = true" :style="{display: loading ? 'none' : 'block'}"
-                  @loaded="loading = false">
+          <div style="overflow: auto; height: calc(100% - 24px); width: 100%; margin-top: 24px" :style="{display: loading ? 'none' : undefined}">
             <slot></slot>
-          </v-main>
+          </div>
         </v-layout>
       </v-sheet>
     </div>
@@ -46,15 +45,10 @@ export default {
   props: {
     'name': String,
     'icon': String,
+    'loading': Boolean
   },
   data: () => ({
     fullscreen: false,
-    loading: false
   }),
-  methods: {
-    setLoaded () {
-      console.log('loaded')
-    }
-  }
 }
 </script>

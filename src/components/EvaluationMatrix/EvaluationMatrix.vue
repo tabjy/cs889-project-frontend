@@ -1,19 +1,13 @@
 <template>
+  <div style="margin-bottom: -38px;">
+    <v-select
+        v-model="method"
+        :items="methods"
+        label="Method"
+        required
+    ></v-select>
+  </div>
   <div>
-    <v-row>
-      <v-col style="{
-        margin-bottom: -23px;
-        font-size: 24px;
-        padding: 16px 16px 0 16px;
-      }">
-        <v-select
-            v-model="method"
-            :items="methods"
-            label="Method"
-            required
-        ></v-select>
-      </v-col>
-    </v-row>
     <v-table v-if="method">
       <thead>
       <tr>
@@ -36,7 +30,9 @@
 <script>
 export default {
   name: 'EvaluationMatrix',
-  props: {},
+  props: {
+    matrices: Object
+  },
   data: () => ({
     sort: {
       key: 'id',
@@ -46,20 +42,23 @@ export default {
     keywords: '',
 
     method: null,
-    matrices: {}
   }),
+  watch: {
+    matrices () {
+      this.method = Object.keys(this.matrices).sort()[0]
+    }
+  },
   computed: {
-    methods() {
+    methods () {
       return this.matrices ? Object.keys(this.matrices).sort() : []
     },
 
-    sortedFunctions() {
+    sortedFunctions () {
       const comparator = this.sort.key === 'id'
           ? (lhs, rhs) => lhs.id - rhs.id
           : (lhs, rhs) => String(lhs[this.sort.key]).localeCompare(String(rhs[this.sort.key]))
 
       const keywords = this.keywords.split(/\s+/g).filter(str => str.length).map(str => str.toLowerCase())
-
 
       return this.functions.filter(item =>
           !keywords.length ||
@@ -67,15 +66,15 @@ export default {
       ).sort((lhs, rhs) => comparator(lhs, rhs) * (this.sort.descending ? -1 : 1))
     }
   },
-  created () {
-    this.$parent.$emit('loading')
-
-    this.$api.getEvaluationScores().then(matrices => {
-      this.matrices = matrices
-      this.method = Object.keys(matrices).sort()[0]
-
-      this.$parent.$emit('loaded')
-    })
-  }
+  // created () {
+  //   this.$parent.$emit('loading')
+  //
+  //   this.$api.getEvaluationScores().then(matrices => {
+  //     this.matrices = matrices
+  //     this.method = Object.keys(matrices).sort()[0]
+  //
+  //     this.$parent.$emit('loaded')
+  //   })
+  // }
 }
 </script>

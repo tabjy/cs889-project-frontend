@@ -1,12 +1,49 @@
 <template>
-  <div style="height: 100%">
-    <v-select
-        v-model="projection"
-        :items="projections"
-        label="Method"
-        required
-    ></v-select>
-    <div ref="container" style="height: 100%"></div>
+  <div style="margin-bottom: -38px;">
+    <div style="display: inline-flex; width: 100%">
+      <v-select
+          v-model="projection"
+          :items="projections"
+          label="Method"
+          required
+      ></v-select>
+      <div style="padding-left: 4px; padding-right: 4px">
+        <v-switch
+            v-model="graph"
+            label="Graph"
+            style="height: 24px; margin-top: -12px;"
+        ></v-switch>
+        <v-switch
+            v-model="color"
+            label="Colorized"
+            style="height: 24px"
+        ></v-switch>
+      </div>
+    </div>
+  </div>
+
+  <div style="height: calc(100% - 56px); display: flex; overflow: hidden">
+    <div v-if="embeddings === null || coordinates === null" style="margin: auto;">
+      <div v-if="embeddings === null">
+        <p class="text-caption">Click an instance to view embeddings</p>
+      </div>
+
+      <div v-if="coordinates === null && embeddings !== null" class="text-center"
+           style="margin-top: auto; margin-bottom: auto; width: 100%">
+        <v-progress-circular
+            indeterminate="true"
+            color="primary"
+        ></v-progress-circular>
+      </div>
+    </div>
+
+    <div ref="container" style="width: 100%; height: 100%" :style="{display: !coordinates ? 'none' : undefined}">
+    </div>
+    <div v-if="coordinates && color" style="position: absolute;top: 100%;transform: translate(0, -100%);margin-top: -16px;">
+      <ul style="padding-left: 16px">
+        <li v-for="(name, i) in legend" :style="{color: swatch[i % swatch.length], height: '12px'}" class="text-caption">{{ name }}</li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -14,8 +51,14 @@
 import * as druid from '@saehrimnir/druidjs'
 import * as d3 from 'd3'
 
+import { reverselyMapIds, getTagType } from '../../utils/ast'
+
 export default {
   name: 'Embedding',
+  props: {
+    embeddings: Object,
+    ast: XMLDocument
+  },
   data: () => ({
     projection: 'PCA',
     projections: [
@@ -23,25 +66,34 @@ export default {
       'MDS',
       't-SNE'
     ],
+    coordinates: null,
 
-    // TODO: update id interactive
-    id: 0,
-    cached: {
-      pca: null,
-      mds: null,
-      tsne: null
-    },
-    embedding: []
+    graph: true,
+    color: true,
+    dimension: 2,
+
+    idMaps: null,
+    swatch: d3.schemeCategory10,
+    legend: ['comments', 'literals', 'names', 'statements', 'sub-statements', 'declarations', 'types', 'expressions', 'other']
   }),
   methods: {
-    drawChart (container, coordinates) {
-      container.innerHTML = ''
+    drawChart () {
+      this.$refs.container.innerHTML = ''
 
-      const width = Math.max(0, container.clientWidth)
-      const height = Math.max(0, this.$parent.$el.clientWidth - 24)
-      const max = Math.max(...coordinates.map(([x, y]) => Math.max(Math.abs(x), Math.abs(y))))
-      const data = coordinates.map(([x, y]) => [(x + max) / (2 * max) * width, (y + max) / (2 * max) * height])
+      if (!this.coordinates) {
+        return
+      }
 
+      if (!this.$refs.container.clientWidth || !this.$refs.container.clientHeight) {
+        setTimeout(() => this.drawChart(), 0) // HACK: wait for DOM to layout
+        return
+      }
+
+      const width = this.$refs.container.clientWidth
+      const height = this.$refs.container.clientHeight
+      const max = Math.max(...this.coordinates.map(([x, y]) => Math.max(Math.abs(x), Math.abs(y))))
+
+      const data = this.coordinates.map(([x, y]) => [(x + max) / (2 * max) * width, (y + max) / (2 * max) * height])
       const svg = d3.create('svg')
           .attr('width', width)
           .attr('height', height)
@@ -61,10 +113,22 @@ export default {
           .enter()
           .append('circle')
           .attr('r', defaultRadius)
-          // .attr('fill', i => d3.schemeCategory10[labels[i]])
-          .attr('fill', i => 'steelblue')
+          .attr('fill', i => {
+            if (!this.color) {
+              return 'steelblue'
+            }
+
+            if (this.graph) {
+              const node = this.idMaps.nodes.get(i + '')
+              return this.swatch[getTagType(node.nodeName) % this.swatch.length]
+            } else {
+              const node = this.idMaps.sequences.get(i + '')
+              return this.swatch[getTagType(node.parentNode.nodeName) % this.swatch.length]
+            }
+          })
+          // .attr('fill', i => 'steelblue')
           .attr('stroke-width', 0)
-          .attr('stroke', 'blue')
+          // .attr('stroke', 'blue')
           .attr('transform', transform(d3.zoomIdentity))
           .attr('class', i => `data-${i}`)
           .on('mouseover', function (e, i) {
@@ -84,64 +148,65 @@ export default {
                 .attr('r', defaultRadius)
                 .attr('stroke-width', 0)
           })
+          .append('title')
+          .text((i) => {
+            const node = this.graph ? this.idMaps.nodes.get(i + '') : this.idMaps.sequences.get(i + '')
+            return node.textContent
+          });
 
       svg
           .call(d3.zoom()
               .scaleExtent([1, 8])
               .on('zoom', (event) => circles.attr('transform', transform(event.transform))))
 
-      container.appendChild(svg.node())
+
+      this.$refs.container.appendChild(svg.node())
     },
     computeCoordinates () {
-      if (this.cached[this.projection.toLowerCase()]) {
-        this.cached[this.projection.toLowerCase()] = this.cached[this.projection.toLowerCase()].slice(0) // trigger view update
-        return
-      }
+      const key = this.projection.toLowerCase().replaceAll('-', '')
 
-      const transformation = new druid[this.projection.replaceAll('-','').toUpperCase()](this.embedding, { d: 2 })
+      this.coordinates = null
+
+      const transformation = new druid[key.toUpperCase()](this.embeddings[this.graph ? 'nodes' : 'sequences'], { d: this.dimension })
       transformation.transform_async().then(result => {
-        this.cached[this.projection.toLowerCase()] = result
+        this.coordinates = result
       })
-    }
-  },
-  computed: {
-    coordinates () {
-      console.log('recompute coordinates')
-
-      if (this.cached[this.projection.toLowerCase()]) {
-        this.$parent.$emit('loaded')
-        return this.cached[this.projection.toLowerCase()]
-      }
-
-      this.$parent.$emit('loading')
-      this.computeCoordinates()
-      return []
-    }
-  },
-  mounted () {
-    let width = 0
-
-    // HACK: resize event not working for some reason
-    setInterval(() => {
-      if (this.$refs.container && (this.$refs.container.clientWidth !== width || !width)) {
-        this.drawChart(this.$refs.container, this.coordinates)
-        width = this.$refs.container.clientWidth
-      }
-    }, 500)
+    },
   },
   watch: {
     projection () {
-      this.drawChart(this.$refs.container, this.coordinates)
-    }
+      if (this.embeddings) {
+        this.computeCoordinates()
+      }
+    },
+    graph () {
+      if (this.embeddings) {
+        this.computeCoordinates()
+      }
+    },
+    color () {
+      if (this.embeddings) {
+        this.computeCoordinates()
+      }
+    },
+    embeddings () {
+      this.coordinates = null
+
+      this.computeCoordinates()
+    },
+    ast () {
+      this.idMaps = reverselyMapIds(this.ast)
+    },
+    coordinates () {
+      this.drawChart()
+    },
   },
-  created () {
-    this.$parent.$emit('loading')
-
-    this.$api.getEmbedding(this.id).then(embedding => {
-      this.embedding = embedding
-
-      // this.$parent.$emit('loaded')
+  mounted () {
+    const observer = new ResizeObserver(() => {
+      this.drawChart()
     })
+
+    observer.observe(this.$refs.container)
   }
 }
 </script>

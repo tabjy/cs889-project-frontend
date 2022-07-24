@@ -131,10 +131,10 @@ export default {
   },
   watch: {
     type () {
-      setImmediate(() => {
+      setTimeout(() => {
         // HACK: wait for HTML layout
         this.drawChart(this.$refs.container, this.attentions[this.type], this.$refs.summary, this.$refs.sources)
-      })
+      }, 500)
     }
   },
   mounted () {
