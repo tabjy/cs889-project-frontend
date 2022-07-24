@@ -55,6 +55,8 @@ class ApiClient {
 
     await Promise.all(this.monitors)
 
+    console.log(this.instances.map(i => i))
+
     return this.instances.map(instance => ({
       id: instance.id,
       source: new DOMParser().parseFromString(instance.ast, 'text/xml').firstElementChild.textContent,
