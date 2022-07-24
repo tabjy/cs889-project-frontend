@@ -93,7 +93,9 @@ export default {
       const height = this.$refs.container.clientHeight
       const max = Math.max(...this.coordinates.map(([x, y]) => Math.max(Math.abs(x), Math.abs(y)))) * 1.05
 
-      const data = this.coordinates.map(([x, y]) => [(x + max) / (2 * max) * width, (y + max) / (2 * max) * height])
+      const data = this.coordinates
+          .slice(0, this.graph ? this.idMaps.nodes.size : this.idMaps.sequences.size)
+          .map(([x, y]) => [(x + max) / (2 * max) * width, (y + max) / (2 * max) * height])
       const svg = d3.create('svg')
           .attr('width', width)
           .attr('height', height)
@@ -168,7 +170,7 @@ export default {
       this.coordinates = null
 
       const transformation = new druid[key.toUpperCase()](this.embeddings[this.graph ? 'nodes' : 'sequences'], { d: this.dimension })
-      transformation.transform_async().then(result => {
+      Promise.all([transformation.transform_async(), new Promise(resolve => setTimeout(resolve, 100))]).then(([result]) => {
         this.coordinates = result
       })
     },

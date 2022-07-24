@@ -9,7 +9,7 @@ loadFonts()
 
 createApp(App)
   .use(vuetify)
-  .use(api, { mock: true })
+  .use(api, { mock: false })
   .mount('#app')
 
 // print mock dataset for development purpose

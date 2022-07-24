@@ -14,14 +14,14 @@
     <v-table>
       <tbody>
       <tr
-          v-for="(item, i) in ((candidates || [])[activated] || [])"
+          v-for="(word, i) in ((candidates || [])[activated] || {words: []}).words"
       >
         <td style="width: 24px;">{{ i }}</td>
         <td style="white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;">
-          {{ item }}
+          {{ word }}
         </td>
         <td style="white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;">
-          <v-progress-linear :model-value="80 - i * 5"></v-progress-linear>
+          <v-progress-linear :model-value="candidates[activated].scores[i] * 100"></v-progress-linear>
         </td>
       </tr>
       </tbody>
