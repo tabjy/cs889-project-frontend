@@ -2,7 +2,8 @@
   <v-row style="margin-left: 8px; margin-top: 16px">
     <div>
       <h3>Function {{ id }}:</h3>
-      <p class="text-caption">{{ summary ? `"${summary.filter(token => !token.startsWith('<')).join(' ')}"` : 'Loading...'}}</p>
+      <p class="text-caption">
+        {{ summary ? `"${summary.filter(token => !token.startsWith('<')).join(' ')}"` : 'Loading...' }}</p>
     </div>
   </v-row>
   <v-row style="margin-top: 4px">
@@ -31,8 +32,10 @@
         sm="4"
         name="Candidate Tokens"
         icon="mdi-file-code-outline"
+        :loading="candidates === null || summary === null"
     >
-      <CandidateTokens></CandidateTokens>
+      <CandidateTokens :candidates="candidates" :ast="ast" :summary="summary" :attentions="attentions"
+                       :editables="editables" :highlights="highlights"></CandidateTokens>
     </component-view>
   </v-row>
 </template>
@@ -63,7 +66,8 @@ export default {
       ast: null,
       highlights: new Set(),
       editables: new Set(),
-      attentions: null
+      attentions: null,
+      candidates: null
     }
   },
 
@@ -80,6 +84,10 @@ export default {
 
     this.$api.getAttentions(this.id).then(attentions => {
       this.attentions = attentions
+    })
+
+    this.$api.getCandidateTokens(this.id).then(tokens => {
+      this.candidates = tokens
     })
   }
 }
