@@ -143,7 +143,7 @@ export default {
 
     _selectedInstances: [],
 
-    dialog: true
+    dialog: false
   }),
   computed: {
     selectedInstances () {
@@ -232,7 +232,6 @@ export default {
   },
   mounted () {
     window.onmessage = (e) => {
-      console.log(e)
       let data
       try {
         data = JSON.parse(e.data)
