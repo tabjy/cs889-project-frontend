@@ -78,9 +78,6 @@ export default {
   }),
   methods: {
     drawChart () {
-      console.log(this.coordinates.map(i => i))
-      console.log(this.idMaps.entries())
-
       this.$refs.container.innerHTML = ''
 
       if (!this.coordinates) {

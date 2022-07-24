@@ -17,7 +17,7 @@ class ApiClient {
         nodes: json['intermediate_output'][1]['Embedding for code graph node'][0]
       },
       attentions: {
-        sequence: json['intermediate_output'][Object.keys(json['intermediate_output']).length]['Attention weight between code sequence and predicted document'][0],
+        sequences: json['intermediate_output'][Object.keys(json['intermediate_output']).length]['Attention weight between code sequence and predicted document'][0],
         nodes: json['intermediate_output'][Object.keys(json['intermediate_output']).length]['Attention weight between graph node sequence and predicted document'][0]
       },
       // summary: ...,
