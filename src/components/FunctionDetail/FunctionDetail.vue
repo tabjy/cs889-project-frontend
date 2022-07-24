@@ -1,6 +1,6 @@
 <template>
   <div>
-    <pre style="font-size: 12px; padding: 8px"><code><code-node
+    <pre style="font-size: 14px; padding: 4px"><code><code-node
         v-if="ast"
         :node="ast"
         :highlights="highlights"
@@ -18,23 +18,12 @@ export default {
   components: {
     CodeNode
   },
-  data () {
-    return {
-      // TODO: interactively update the id
-      id: 0,
-      ast: null,
-      highlights: new Set(),
-      editables: new Set()
-    }
-  },
-  created () {
-    this.$parent.$emit('loading')
 
-    this.$api.getAst(this.id).then(xml => {
-      this.ast = new DOMParser().parseFromString(xml, 'text/xml')
-      this.$parent.$emit('loaded')
-    })
-  }
+  props: {
+    ast: XMLDocument,
+    highlights: Set,
+    editables: Set
+  },
 }
 </script>
 

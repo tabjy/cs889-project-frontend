@@ -91,7 +91,7 @@ export default {
 
       const width = this.$refs.container.clientWidth
       const height = this.$refs.container.clientHeight
-      const max = Math.max(...this.coordinates.map(([x, y]) => Math.max(Math.abs(x), Math.abs(y))))
+      const max = Math.max(...this.coordinates.map(([x, y]) => Math.max(Math.abs(x), Math.abs(y)))) * 1.05
 
       const data = this.coordinates.map(([x, y]) => [(x + max) / (2 * max) * width, (y + max) / (2 * max) * height])
       const svg = d3.create('svg')

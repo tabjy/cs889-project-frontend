@@ -10,10 +10,12 @@
       ></v-text-field>
     </div>
     <div>
-      <v-table>
+      <v-table id="function-table">
         <thead>
         <tr>
-          <th class="text-left" style="width: 84px">
+          <th class="text-left" style="padding-left: 0; max-width: 1px;">
+          </th>
+          <th class="text-left" style="width: 80px">
             ID
             <v-btn
                 :icon="sort.key === 'id' && sort.descending ? 'mdi-chevron-down' : 'mdi-chevron-up'"
@@ -42,10 +44,16 @@
         <tbody>
         <tr
             v-for="item in sortedFunctions"
-            :key="item.name"
+            :key="item.id"
             @click.stop="$emit('setActiveInstance', item.id)"
             style="cursor: pointer"
         >
+          <td>
+            <v-checkbox
+                v-model="selectedInstances[item.id]"
+                @click.stop=""
+                style="height: 24px;margin-top: -28px; margin-left: -20px; max-width:1px;"></v-checkbox>
+          </td>
           <td>{{ item.id }}</td>
           <td style="white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;">
           <span>
@@ -85,8 +93,32 @@ export default {
     },
 
     keywords: '',
+
+    _selectedInstances: []
   }),
   computed: {
+    selectedInstances () {
+      return new Proxy({}, {
+        get: (target, p, receiver) => {
+          return this._selectedInstances.indexOf(p) !== -1
+        },
+        set: (target, p, value, receiver) => {
+          if (value && this._selectedInstances.indexOf(p) === -1) {
+            this._selectedInstances.push(p)
+            this.$emit('addSelectedInstance', p)
+            return true
+          }
+
+          if (!value && this._selectedInstances.indexOf(p) !== -1) {
+            this._selectedInstances.splice(this._selectedInstances.indexOf(p), 1)
+            this.$emit('removeSelectedInstance', p)
+            return true
+          }
+
+          return false
+        }
+      })
+    },
     sortedFunctions () {
       const comparator = this.sort.key === 'id'
           ? (lhs, rhs) => lhs.id - rhs.id
@@ -104,14 +136,12 @@ export default {
       ).sort((lhs, rhs) => comparator(lhs, rhs) * (this.sort.descending ? -1 : 1))
     }
   },
-  // created () {
-  //   this.$parent.$emit('loading')
-  //
-  //   this.$api.getInstances().then(instances => {
-  //     this.functions = instances
-  //
-  //     this.$parent.$emit('loaded')
-  //   })
-  // }
 }
 </script>
+
+<style>
+#function-table th, #function-table td {
+  padding-left: 16px;
+  padding-right: 0px;
+}
+</style>

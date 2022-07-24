@@ -25,7 +25,11 @@
               icon="mdi-table"
               :loading="functionInstances === null"
           >
-            <function-table :functions="functionInstances" @set-active-instance="setActiveInstance"></function-table>
+            <function-table :functions="functionInstances"
+                            @set-active-instance="setActiveInstance"
+                            @add-selected-instance="addSelectedInstance"
+                            @remove-selected-instance="removeSelectedInstance"
+            ></function-table>
           </component-view>
 
           <component-view
@@ -38,57 +42,26 @@
             <embedding :embeddings="embeddings" :ast="ast"></embedding>
           </component-view>
         </v-row>
-        <v-row>
-          <component-view
-              cols="12"
-              sm="4"
-              name="Function Detail"
-              icon="mdi-file-code-outline"
-          >
-            <function-details></function-details>
-          </component-view>
 
-          <component-view
-              cols="12"
-              sm="4"
-              name="Attention"
-              icon="mdi-file-code-outline"
-          >
-            <attention></attention>
-          </component-view>
-
-          <component-view
-              cols="12"
-              sm="4"
-              name="Candidate Tokens"
-              icon="mdi-file-code-outline"
-          >
-            <CandidateTokens></CandidateTokens>
-          </component-view>
-        </v-row>
+        <instance-view v-for="(id, i) in selectedInstances" :id="id"></instance-view>
       </div>
-      <!--      </v-container>-->
     </v-main>
   </v-app>
 </template>
 
 <script>
 import ComponentView from './components/ComponentView.vue'
-import FunctionDetails from './components/FunctionDetail/FunctionDetail.vue'
 import FunctionTable from './components/FunctionTable/FunctionTable.vue'
 import EvaluationMatrix from './components/EvaluationMatrix/EvaluationMatrix.vue'
 import Embedding from './components/Embedding/Embedding.vue'
-import Attention from './components/Attention/Attention.vue'
-import CandidateTokens from './components/CandidateTokens/CandidateTokens.vue'
+import InstanceView from './components/InstanceView.vue'
 
 export default {
   name: 'App',
 
   components: {
-    CandidateTokens,
-    Attention,
+    InstanceView,
     EvaluationMatrix,
-    FunctionDetails,
     ComponentView,
     FunctionTable,
     Embedding
@@ -99,10 +72,10 @@ export default {
 
     functionInstances: null,
     activeInstanceId: -1,
+    selectedInstances: [],
 
     embeddings: null,
     ast: null,
-
   }),
 
   methods: {
@@ -116,6 +89,16 @@ export default {
         this.embeddings = embedding
         this.ast = new DOMParser().parseFromString(ast, 'text/xml')
       })
+    },
+    addSelectedInstance(id) {
+      if (this.selectedInstances.indexOf(id) === -1) {
+        this.selectedInstances.push(id)
+      }
+    },
+    removeSelectedInstance(id) {
+      if (this.selectedInstances.indexOf(id) !== -1) {
+        this.selectedInstances.splice(this.selectedInstances.indexOf(id), 1)
+      }
     }
   },
 
