@@ -14,7 +14,7 @@
         icon="mdi-file-code-outline"
         :loading="ast === null"
     >
-      <function-details :ast="ast" :editables="editables" :highlights="highlights"></function-details>
+      <function-details :ast="ast" :editables="editables" :highlights="highlights" @reload-instances="$emit('reloadInstances')"></function-details>
     </component-view>
 
     <component-view

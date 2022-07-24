@@ -11,6 +11,11 @@ class ApiClient {
     throw new Error('not implemented!')
   }
 
+  async addInstance(source) {
+    // TODO
+    throw new Error('not implemented!')
+  }
+
   async getEmbedding (id) {
     // TODO
     throw new Error('not implemented!')
@@ -38,6 +43,33 @@ class ApiClient {
 }
 
 class MockApiClient extends ApiClient {
+  constructor () {
+    super()
+
+    this.instances = [
+      {
+        id: 0,
+        source: 'public static void main(String[] args) {\n  System.out.println("hello world!");\n}',
+        summary: 'print the string "hello world" to console',
+      },
+        {
+          id: 1,
+          source: 'private int add(int a, int b) {\n  return a + b;\n}',
+          summary: 'add the two input integer'
+        },
+        {
+          id: 2,
+          source: 'private int subtract(int a, int b) {\n  return a - b;\n}',
+          summary: 'subtract the second input from the first'
+        },
+        {
+          id: 3,
+          source: 'private int mul(int a, int b) {\n  return a * b;\n}',
+          summary: 'multiply the two input integers'
+        }
+      ]
+  }
+
   async getEvaluationScores () {
     // simulate network delay
     await sleep(500 + 1000 * Math.random())
@@ -56,28 +88,16 @@ class MockApiClient extends ApiClient {
 
   async getInstances () {
     await sleep(500 + 1000 * Math.random())
-    return [
-      {
-        id: 0,
-        source: 'public static void main(String[] args) {\n  System.out.println("hello world!");\n}',
-        summary: 'print the string "hello world" to console',
-      },
-      {
-        id: 1,
-        source: 'private int add(int a, int b) {\n  return a + b;\n}',
-        summary: 'add the two input integer'
-      },
-      {
-        id: 2,
-        source: 'private int subtract(int a, int b) {\n  return a - b;\n}',
-        summary: 'subtract the second input from the first'
-      },
-      {
-        id: 3,
-        source: 'private int mul(int a, int b) {\n  return a * b;\n}',
-        summary: 'multiply the two input integers'
-      }
-    ]
+    return this.instances
+  }
+
+  async addInstance(source) {
+    await sleep(500 + 1000 * Math.random())
+    this.instances.push({
+      id: this.instances.length,
+      source,
+      summary: 'some random dummy summary'
+    })
   }
 
   async getEmbedding (id) {

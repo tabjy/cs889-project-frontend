@@ -29,6 +29,7 @@
                             @set-active-instance="setActiveInstance"
                             @add-selected-instance="addSelectedInstance"
                             @remove-selected-instance="removeSelectedInstance"
+                            @reload-instances="reloadInstances()"
             ></function-table>
           </component-view>
 
@@ -43,7 +44,7 @@
           </component-view>
         </v-row>
 
-        <instance-view v-for="(id, i) in selectedInstances" :id="id"></instance-view>
+        <instance-view v-for="(id, i) in selectedInstances" :id="id" @reload-instances="reloadInstances()"></instance-view>
       </div>
     </v-main>
   </v-app>
@@ -90,15 +91,24 @@ export default {
         this.ast = new DOMParser().parseFromString(ast, 'text/xml')
       })
     },
-    addSelectedInstance(id) {
+    addSelectedInstance (id) {
       if (this.selectedInstances.indexOf(id) === -1) {
         this.selectedInstances.push(id)
       }
     },
-    removeSelectedInstance(id) {
+    removeSelectedInstance (id) {
       if (this.selectedInstances.indexOf(id) !== -1) {
         this.selectedInstances.splice(this.selectedInstances.indexOf(id), 1)
       }
+    },
+
+    reloadInstances () {
+      console.log('test')
+
+      this.functionInstances = null
+      this.$api.getInstances().then(instances => {
+        this.functionInstances = instances
+      })
     }
   },
 

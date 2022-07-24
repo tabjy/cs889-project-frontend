@@ -96,6 +96,10 @@ export default {
 
   methods: {
     drawChart () {
+      if (!this.$refs.container) {
+        return
+      }
+
       this.$refs.container.innerHTML = ''
 
       if (!this.attentions) {

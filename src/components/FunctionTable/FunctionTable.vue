@@ -1,13 +1,60 @@
 <template>
   <div>
     <div style="margin-top: 10px; margin-bottom: -38px;">
-      <v-text-field
-          label="Search"
-          placeholder="Keywords"
-          variant="underlined"
-          v-model="keywords"
-          style="padding-left: 8px; padding-right: 8px;"
-      ></v-text-field>
+      <div style="display: inline-flex; width: 100%">
+        <v-text-field
+            label="Search"
+            placeholder="Keywords"
+            variant="underlined"
+            v-model="keywords"
+            style="padding-left: 8px; padding-right: 8px;"
+        ></v-text-field>
+        <div style="padding-left: 4px; padding-right: 4px">
+          <v-dialog
+              v-model="dialog"
+              persistent
+          >
+            <template v-slot:activator="{ props }">
+              <v-btn
+                  icon="mdi-plus"
+                  variant="outline"
+                  v-bind="props"
+              ></v-btn>
+            </template>
+            <v-card>
+              <v-card-title>
+                <span class="text-h5">Add new instance</span>
+              </v-card-title>
+              <v-card-text>
+                <v-container>
+                  <iframe
+                      ref="iframe"
+                      src="/editor-iframe.html"
+                      style="height: 600px; width: 800px; border: none;"
+                  />
+                </v-container>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn
+                    color="blue-darken-1"
+                    text
+                    @click="dialog = false"
+                >
+                  Close
+                </v-btn>
+                <v-btn
+                    color="blue-darken-1"
+                    text
+                    @click="addInstance()"
+                >
+                  Save
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </div>
+      </div>
     </div>
     <div>
       <v-table id="function-table">
@@ -94,7 +141,9 @@ export default {
 
     keywords: '',
 
-    _selectedInstances: []
+    _selectedInstances: [],
+
+    dialog: true
   }),
   computed: {
     selectedInstances () {
@@ -136,12 +185,72 @@ export default {
       ).sort((lhs, rhs) => comparator(lhs, rhs) * (this.sort.descending ? -1 : 1))
     }
   },
+  methods: {
+    resetEditor () {
+      const params = {
+        method: 'createEditor',
+        value: 'public void myFunction() {\n    // TODO: input your function here\n}\n',
+        language: 'java'
+      }
+      this.$refs.iframe.contentWindow.postMessage(JSON.stringify(params), '*')
+    },
+    async getEditorContent () {
+      return new Promise((resolve, reject) => {
+        const handler = setTimeout(() => reject(new Error('timed out')), 1000)
+
+        const oldListener = window.onmessage
+
+        window.onmessage = (e) => {
+          window.onmessage = oldListener
+
+          let data
+          try {
+            data = JSON.parse(e.data)
+          } catch (err) {
+            reject(err)
+            return
+          }
+          switch (data.method) {
+            case 'gotValue':
+              clearTimeout(handler)
+              resolve(data.value)
+              return
+          }
+        }
+
+        this.$refs.iframe.contentWindow.postMessage(JSON.stringify({ method: 'getValue' }), '*')
+      })
+    },
+    addInstance () {
+      this.getEditorContent().then(source => {
+        this.$api.addInstance(source).then(() => {
+          this.dialog = false
+          this.$emit('reloadInstances')
+        })
+      })
+    }
+  },
+  mounted () {
+    window.onmessage = (e) => {
+      console.log(e)
+      let data
+      try {
+        data = JSON.parse(e.data)
+      } catch (err) {
+        return
+      }
+      switch (data.method) {
+        case 'ready':
+          this.resetEditor()
+      }
+    }
+  }
 }
 </script>
 
 <style>
 #function-table th, #function-table td {
   padding-left: 16px;
-  padding-right: 0px;
+  padding-right: 0;
 }
 </style>
